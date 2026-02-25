@@ -3,12 +3,15 @@
 namespace App\Controller;
 
 use App\Entity\Website;
+use App\Entity\WebsiteCheck;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Service\WebsiteChecker;
+
+
 
 final class ApiWebsiteController extends AbstractController
 {
@@ -26,6 +29,7 @@ final class ApiWebsiteController extends AbstractController
         $website->setUrl($data['url']);
         $website->setIsUp(true);
         $website->setLastStatus(null);
+         $website->setUser($this->getUser());
 
         $em->persist($website);
         $em->flush();
@@ -39,7 +43,8 @@ final class ApiWebsiteController extends AbstractController
     #[Route('/api/website', name: 'list_websites', methods: ['GET'])]
 public function list(EntityManagerInterface $em): JsonResponse
 {
-    $websites = $em->getRepository(Website::class)->findAll();
+    $websites = $em->getRepository(Website::class)
+               ->findBy(['user' => $this->getUser()]);
 
     $data = [];
 
@@ -82,4 +87,45 @@ public function check(
         'isUp' => $result['isUp']
     ]);
 }
+
+#[Route('/api/website/{id}', name: 'delete_website', methods: ['DELETE'])]
+public function delete(int $id, EntityManagerInterface $em): JsonResponse
+{
+    $website = $em->getRepository(Website::class)->find($id);
+
+    if (!$website || $website->getUser() !== $this->getUser()) {
+        return $this->json(['error' => 'Not found'], 404);
+    }
+
+    $em->remove($website);
+    $em->flush();
+
+    return $this->json(['message' => 'Website deleted']);
+}
+
+#[Route('/api/website/{id}/history', name: 'website_history', methods: ['GET'])]
+public function history(int $id, EntityManagerInterface $em): JsonResponse
+{
+    $website = $em->getRepository(Website::class)->find($id);
+
+    if (!$website || $website->getUser() !== $this->getUser()) {
+        return $this->json(['error' => 'Not found'], 404);
+    }
+
+    $checks = $em->getRepository(WebsiteCheck::class)
+                 ->findBy(['website' => $website], ['checkedAt' => 'ASC']);
+
+    $data = [];
+    foreach ($checks as $check) {
+        $data[] = [
+            'status' => $check->getStatus(),
+            'isUp' => $check->IsUp(),
+            'checkedAt' => $check->getCheckedAt()->format('Y-m-d H:i:s')
+        ];
+    }
+
+    return $this->json($data);
+}
+
+
 }

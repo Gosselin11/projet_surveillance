@@ -6,6 +6,8 @@ use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_YES', fields: ['email'])]
@@ -18,6 +20,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180)]
     private ?string $email = null;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Website::class)]
+private Collection $websites;
 
     /**
      * @var list<string> The user roles
@@ -47,6 +52,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+
+    public function __construct()
+{
+    $this->websites = new ArrayCollection();
+}
+
+public function getWebsites(): Collection
+{
+    return $this->websites;
+}
 
     /**
      * A visual identifier that represents this user.
