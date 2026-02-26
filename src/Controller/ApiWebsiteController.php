@@ -10,12 +10,14 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Service\WebsiteChecker;
-
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 
 final class ApiWebsiteController extends AbstractController
 {
-    #[Route('/api/website', name: 'create_website', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+#[Route('/api/website', name: 'create_website', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -43,8 +45,9 @@ final class ApiWebsiteController extends AbstractController
     #[Route('/api/website', name: 'list_websites', methods: ['GET'])]
 public function list(EntityManagerInterface $em): JsonResponse
 {
-    $websites = $em->getRepository(Website::class)
-               ->findBy(['user' => $this->getUser()]);
+    $this->denyAccessUnlessGranted('ROLE_USER');
+
+    $websites = $em->getRepository(Website::class)->findAll();
 
     $data = [];
 
@@ -88,6 +91,7 @@ public function check(
     ]);
 }
 
+#[IsGranted('ROLE_ADMIN')]
 #[Route('/api/website/{id}', name: 'delete_website', methods: ['DELETE'])]
 public function delete(int $id, EntityManagerInterface $em): JsonResponse
 {
@@ -125,6 +129,13 @@ public function history(int $id, EntityManagerInterface $em): JsonResponse
     }
 
     return $this->json($data);
+}
+
+#[IsGranted('ROLE_USER')]
+#[Route('/dashboard', name: 'dashboard')]
+public function dashboard(): Response
+{
+    return $this->render('dashboard.html.twig');
 }
 
 

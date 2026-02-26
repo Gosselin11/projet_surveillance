@@ -1,0 +1,123 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+<div class="min-h-screen bg-gray-900 text-white p-8">
+
+    <h1 class="text-3xl font-bold mb-8">Monitoring Dashboard</h1>
+
+    {% if selectedWebsite %}
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+            <h2 class="text-gray-400">Site</h2>
+            <p class="text-xl font-semibold mt-2">{{ selectedWebsite.name }}</p>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+            <h2 class="text-gray-400">Total Checks</h2>
+            <p class="text-2xl font-bold mt-2">{{ checks|length }}</p>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+            <h2 class="text-gray-400">Status Actuel</h2>
+
+            {% set lastCheck = checks|last %}
+
+            {% if lastCheck and lastCheck.isUp %}
+                <p class="text-green-400 text-xl font-bold mt-2">🟢 UP</p>
+            {% else %}
+                <p class="text-red-500 text-xl font-bold mt-2">🔴 DOWN</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Graph -->
+    <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-10">
+        <canvas id="websiteChart"></canvas>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+        <h2 class="text-xl font-semibold mb-4">Derniers Checks</h2>
+
+        <table class="w-full text-left">
+            <thead>
+                <tr class="border-b border-gray-700">
+                    <th class="pb-2">Date</th>
+                    <th class="pb-2">Status</th>
+                    <th class="pb-2">Response Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for check in checks|slice(-10) %}
+                <tr class="border-b border-gray-700">
+                    <td class="py-2">
+                        {{ check.checkedAt|date('d/m/Y H:i:s') }}
+                    </td>
+                    <td class="py-2">
+                        {% if check.isUp %}
+                            <span class="text-green-400 font-bold">UP</span>
+                        {% else %}
+                            <span class="text-red-500 font-bold">DOWN</span>
+                        {% endif %}
+                    </td>
+                    <td class="py-2">
+                        {{ check.responseTime ?? 'N/A' }} ms
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+        <p>Aucun site trouvé.</p>
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const labels = {{ labels|json_encode|raw }};
+const dataStatus = {{ dataStatus|json_encode|raw }};
+
+new Chart(document.getElementById('websiteChart'), {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Disponibilité',
+            data: dataStatus,
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34,197,94,0.2)',
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        scales: {
+            y: {
+                min: 0,
+                max: 1,
+                ticks: {
+                    stepSize: 1,
+                    callback: function(value) {
+                        return value === 1 ? 'UP' : 'DOWN';
+                    }
+                }
+            }
+        }
+    }
+});
+
+</script>
+{% endblock %}
