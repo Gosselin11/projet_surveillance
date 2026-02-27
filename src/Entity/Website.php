@@ -17,7 +17,7 @@ class Website
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'websites')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?User $user = null;
 
     #[ORM\Column(length: 255)]
@@ -30,7 +30,7 @@ class Website
     private ?int $lastStatus = null;
 
     #[ORM\Column]
-    private ?bool $isUp = null;
+    private ?bool $isUp = false;
 
     #[ORM\OneToMany(mappedBy: 'website', targetEntity: WebsiteCheck::class, orphanRemoval: true)]
     private Collection $checks;

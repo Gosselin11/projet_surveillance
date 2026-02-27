@@ -30,8 +30,7 @@ class CheckWebsitesCommand extends Command
 
         foreach ($websites as $website) {
 
-            $result = $this->checker->check($website->getUrl());
-
+            $result = $this->checker->checkWebsite($website);
             $website->setLastStatus($result['status']);
             $website->setIsUp($result['isUp']);
 

@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="max-w-xl mx-auto mt-10 bg-gray-800 p-8 rounded-xl text-white">
+    <h2 class="text-2xl mb-6">Ajouter un site</h2>
+
+    {{ form_start(form) }}
+        {{ form_row(form.name) }}
+        {{ form_row(form.url) }}
+
+        <button class="bg-green-600 px-4 py-2 rounded mt-4">
+            Enregistrer
+        </button>
+    {{ form_end(form) }}
+</div>
+{% endblock %}
